@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskManager - Board</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg-light: #f0f2f5;
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg-light);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .navbar {
+            background: #1a1a2e !important;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            padding: 0.5rem 0;
+            flex-shrink: 0;
+        }
+        .navbar-brand { font-weight: 700; font-size: 1.3rem; letter-spacing: -0.5px; }
+        .navbar-brand i { color: var(--primary); }
+        .nav-link { font-weight: 500; padding: 0.4rem 0.9rem !important; border-radius: 8px; transition: all 0.15s; font-size: 0.9rem; }
+        .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.1); }
+
+        .board-header {
+            padding: 1rem 0 0.5rem;
+            flex-shrink: 0;
+        }
+        .board-header h1 {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #1a1a2e;
+            margin: 0;
+        }
+        .back-link { color: #6c757d; text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+        .back-link:hover { color: var(--primary); }
+
+        .board-wrapper {
+            display: flex;
+            gap: 1rem;
+            padding: 0.5rem 0 1.5rem;
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            min-height: 0;
+        }
+        .board-column {
+            flex: 0 0 320px;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            background: #e8ebef;
+            border-radius: 12px;
+            padding: 0.75rem;
+            max-height: 100%;
+        }
+        .column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.25rem 0.5rem 0.75rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .column-header .count {
+            background: rgba(0,0,0,0.08);
+            padding: 0.1rem 0.55rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        .column-body {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 60px;
+            padding: 0 0.25rem;
+        }
+        .column-body::-webkit-scrollbar { width: 4px; }
+        .column-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+
+        .task-card {
+            background: white;
+            border-radius: 10px;
+            padding: 0.75rem 0.85rem;
+            margin-bottom: 0.6rem;
+            box-shadow: var(--card-shadow);
+            cursor: pointer;
+            transition: box-shadow 0.15s, transform 0.15s;
+            position: relative;
+            border-left: 3px solid transparent;
+        }
+        .task-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+        .task-card.dragging {
+            opacity: 0.5;
+            transform: rotate(3deg);
+        }
+        .task-card.drag-over {
+            border: 2px dashed var(--primary);
+            background: #f0f2ff;
+        }
+        .task-card .card-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.3rem;
+            word-break: break-word;
+        }
+        .task-card .card-desc {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .task-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-bottom: 0.5rem;
+        }
+        .task-meta span {
+            color: #6c757d;
+            background: #f3f4f6;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            padding: 0.12rem 0.42rem;
+        }
+        .task-meta .overdue {
+            color: #dc3545;
+            background: #dc354515;
+        }
+        .task-card .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0;
+            background: none;
+            border: none;
+        }
+        .priority-HIGH { border-left-color: #dc3545; }
+        .priority-MEDIUM { border-left-color: #ffc107; }
+        .priority-LOW { border-left-color: #198754; }
+
+        .task-card .priority-badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .task-card .delete-btn {
+            opacity: 0;
+            transition: opacity 0.15s;
+            padding: 0.15rem 0.35rem;
+            font-size: 0.75rem;
+            color: #adb5bd;
+            background: none;
+            border: none;
+        }
+        .task-card:hover .delete-btn { opacity: 1; }
+        .task-card .delete-btn:hover { color: #dc3545; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px -4px rgba(102, 126, 234, 0.4);
+        }
+        .btn-sm { border-radius: 6px; }
+        .modal-content { border: none; border-radius: 14px; }
+        .modal-header { border-bottom: 1px solid #eef0f5; padding: 1rem 1.25rem; }
+        .modal-body { padding: 1.25rem; }
+        .modal-footer { border-top: 1px solid #eef0f5; padding: 0.75rem 1.25rem; }
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.55rem 0.85rem;
+            border: 2px solid #e9ecef;
+            transition: border-color 0.15s;
+            font-size: 0.9rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+        }
+        .empty-column {
+            color: #adb5bd;
+            text-align: center;
+            padding: 1.5rem 0.5rem;
+            font-size: 0.85rem;
+        }
+        .empty-column i { font-size: 1.5rem; display: block; margin-bottom: 0.5rem; }
+        .toast-container { z-index: 9999; }
+
+        .app-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .board-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 1.5rem;
+            min-height: 0;
+        }
+        .add-card-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            width: 100%;
+            text-align: left;
+            transition: background 0.15s;
+            margin-top: 0.25rem;
+        }
+        .add-card-btn:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--primary);
+        }
+        .member-list, .comments-list {
+            display: grid;
+            gap: 0.5rem;
+        }
+        .member-row, .comment-row {
+            background: #f8f9fb;
+            border: 1px solid #eef0f5;
+            border-radius: 10px;
+            padding: 0.65rem 0.75rem;
+        }
+        .member-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .comment-row .comment-meta {
+            color: #6c757d;
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+        .comment-row .comment-content {
+            color: #1a1a2e;
+            font-size: 0.88rem;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="/dashboard"><i class="bi bi-kanban me-2"></i>TaskManager</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/dashboard"><i class="bi bi-grid-1x2 me-1"></i>Dashboard</a>
+                <a class="nav-link active" href="/projects"><i class="bi bi-folder me-1"></i>Projects</a>
+                <a class="nav-link" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="board-container">
+        <div class="board-header d-flex justify-content-between align-items-center">
+            <div>
+                <a href="/projects" class="back-link"><i class="bi bi-arrow-left me-1"></i>Projects</a>
+                <h1 id="projectName"><i class="bi bi-folder me-2 text-primary"></i></h1>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#membersModal">
+                    <i class="bi bi-people me-1"></i> Members
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add Task
+                </button>
+            </div>
+        </div>
+
+        <div class="board-wrapper">
+            <div class="board-column" data-status="TODO">
+                <div class="column-header">
+                    <span><i class="bi bi-circle me-1" style="color:#6c757d"></i>To Do</span>
+                    <span class="count" id="count-TODO">0</span>
+                </div>
+                <div class="column-body" id="column-TODO"></div>
+                <button class="add-card-btn" data-bs-toggle="modal" data-bs-target="#createModal" data-status="TODO">
+                    <i class="bi bi-plus me-1"></i>Add card
+                </button>
+            </div>
+            <div class="board-column" data-status="IN_PROGRESS">
+                <div class="column-header">
+                    <span><i class="bi bi-arrow-repeat me-1" style="color:#ffc107"></i>In Progress</span>
+                    <span class="count" id="count-IN_PROGRESS">0</span>
+                </div>
+                <div class="column-body" id="column-IN_PROGRESS"></div>
+                <button class="add-card-btn" data-bs-toggle="modal" data-bs-target="#createModal" data-status="IN_PROGRESS">
+                    <i class="bi bi-plus me-1"></i>Add card
+                </button>
+            </div>
+            <div class="board-column" data-status="DONE">
+                <div class="column-header">
+                    <span><i class="bi bi-check-circle me-1" style="color:#198754"></i>Done</span>
+                    <span class="count" id="count-DONE">0</span>
+                </div>
+                <div class="column-body" id="column-DONE"></div>
+                <button class="add-card-btn" data-bs-toggle="modal" data-bs-target="#createModal" data-status="DONE">
+                    <i class="bi bi-plus me-1"></i>Add card
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2 text-primary"></i>New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="error" class="alert alert-danger d-none"></div>
+                <form id="createForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Title</label>
+                        <input type="text" id="title" class="form-control" placeholder="What needs to be done?" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Description</label>
+                        <textarea id="description" class="form-control" rows="2" placeholder="Add details..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Priority</label>
+                        <select id="priority" class="form-select">
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="HIGH">High</option>
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-medium">Assignee</label>
+                            <select id="assigneeId" class="form-select"></select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-medium">Due Date</label>
+                            <input type="date" id="dueDate" class="form-control">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Create Task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="editError" class="alert alert-danger d-none"></div>
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Title</label>
+                        <input type="text" id="editTitle" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Description</label>
+                        <textarea id="editDescription" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-medium">Priority</label>
+                            <select id="editPriority" class="form-select">
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="HIGH">High</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-medium">Status</label>
+                            <select id="editStatus" class="form-select">
+                                <option value="TODO">To Do</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="DONE">Done</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-medium">Assignee</label>
+                            <select id="editAssigneeId" class="form-select"></select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-medium">Due Date</label>
+                            <input type="date" id="editDueDate" class="form-control">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Save</button>
+                </form>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-chat-left-text me-1 text-primary"></i>Comments</h6>
+                    <small class="text-muted" id="commentsCount">0 comments</small>
+                </div>
+                <div id="commentsList" class="comments-list mb-3"></div>
+                <form id="commentForm">
+                    <div class="input-group">
+                        <input type="text" id="commentContent" class="form-control" placeholder="Add a comment..." required>
+                        <button class="btn btn-primary" type="submit"><i class="bi bi-send"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="membersModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-people me-2 text-primary"></i>Project Members</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="memberError" class="alert alert-danger d-none"></div>
+                <div id="membersList" class="member-list mb-3"></div>
+                <form id="memberForm">
+                    <label class="form-label fw-medium">Add by username or email</label>
+                    <div class="input-group">
+                        <input type="text" id="memberUsername" class="form-control" placeholder="teammate username" required>
+                        <button class="btn btn-primary" type="submit"><i class="bi bi-person-plus"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login';
+    const projectId = new URLSearchParams(window.location.search).get('id');
+    let currentProject = null;
+    let projectMembers = [];
+    let createStatus = 'TODO';
+    let selectedTaskId = null;
+
+    function showToast(message, type = 'success') {
+        const container = document.querySelector('.toast-container');
+        const colors = { success: 'bg-success', danger: 'bg-danger', info: 'bg-info' };
+        const icons = { success: 'bi-check-circle', danger: 'bi-exclamation-triangle', info: 'bi-info-circle' };
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white border-0 ${colors[type]}`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `<div class="d-flex"><div class="toast-body"><i class="bi ${icons[type]} me-2"></i>${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+        container.appendChild(toast);
+        new bootstrap.Toast(toast, { delay: 3000 }).show();
+        toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    }
+
+    function redirectToLogin() {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+    }
+
+    function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[char]));
+    }
+
+    async function getErrorMessage(res) {
+        try {
+            const err = await res.json();
+            return err.error || err.message || `Request failed (${res.status})`;
+        } catch {
+            return `Request failed (${res.status})`;
+        }
+    }
+
+    function resetButton(button, label) {
+        button.disabled = false;
+        button.textContent = label;
+    }
+
+    function authHeaders(extra = {}) {
+        return { ...extra, 'Authorization': `Bearer ${token}` };
+    }
+
+    async function loadProject() {
+        const res = await fetch(`/api/projects/${projectId}`, {
+            headers: authHeaders()
+        });
+        if (res.status === 401 || res.status === 403) {
+            redirectToLogin();
+            return;
+        }
+        if (res.ok) {
+            currentProject = await res.json();
+            projectMembers = currentProject.members || [];
+            document.getElementById('projectName').textContent = currentProject.name;
+            renderMembers();
+            renderMemberOptions();
+        }
+    }
+
+    function renderMemberOptions() {
+        const options = [
+            '<option value="">Unassigned</option>',
+            ...projectMembers.map(member => `<option value="${member.id}">${escapeHtml(member.username)}</option>`)
+        ].join('');
+        document.getElementById('assigneeId').innerHTML = options;
+        document.getElementById('editAssigneeId').innerHTML = options;
+    }
+
+    function renderMembers() {
+        const list = document.getElementById('membersList');
+        if (!projectMembers.length) {
+            list.innerHTML = '<div class="text-muted small">No members found.</div>';
+            return;
+        }
+
+        list.innerHTML = projectMembers.map(member => {
+            const isOwner = currentProject && member.username === currentProject.ownerUsername;
+            return `
+                <div class="member-row">
+                    <div>
+                        <div class="fw-semibold">${escapeHtml(member.username)} ${isOwner ? '<span class="badge text-bg-primary ms-1">Owner</span>' : ''}</div>
+                        <div class="text-muted small">${escapeHtml(member.email)}</div>
+                    </div>
+                    ${isOwner ? '' : `<button class="btn btn-sm btn-outline-danger" onclick="removeMember(${member.id})"><i class="bi bi-person-dash"></i></button>`}
+                </div>`;
+        }).join('');
+    }
+
+    async function refreshMembers() {
+        const res = await fetch(`/api/projects/${projectId}/members`, {
+            headers: authHeaders()
+        });
+        if (res.ok) {
+            projectMembers = await res.json();
+            renderMembers();
+            renderMemberOptions();
+        }
+    }
+
+    async function loadTasks() {
+        const res = await fetch(`/api/tasks?projectId=${projectId}`, {
+            headers: authHeaders()
+        });
+        if (res.status === 401 || res.status === 403) {
+            redirectToLogin();
+            return;
+        }
+        if (!res.ok) return;
+        const tasks = await res.json();
+
+        const groups = { TODO: [], IN_PROGRESS: [], DONE: [] };
+        tasks.forEach(t => { if (groups[t.status]) groups[t.status].push(t); });
+
+        ['TODO', 'IN_PROGRESS', 'DONE'].forEach(status => {
+            const col = document.getElementById(`column-${status}`);
+            const count = document.getElementById(`count-${status}`);
+            const items = groups[status];
+            count.textContent = items.length;
+
+            if (items.length === 0) {
+                col.innerHTML = `<div class="empty-column"><i class="bi bi-inbox"></i>No tasks</div>`;
+                return;
+            }
+
+            col.innerHTML = items.map(t => {
+                const prioIcon = { LOW: 'bi-arrow-down', MEDIUM: 'bi-dash', HIGH: 'bi-arrow-up' }[t.priority];
+                const prioColor = { LOW: 'bg-success', MEDIUM: 'bg-warning text-dark', HIGH: 'bg-danger' }[t.priority];
+                const overdue = t.dueDate && t.dueDate < new Date().toISOString().slice(0, 10) && t.status !== 'DONE';
+                return `
+                    <div class="task-card priority-${t.priority}" draggable="true" data-id="${t.id}" data-status="${status}">
+                        <div class="card-title">${escapeHtml(t.title)}</div>
+                        ${t.description ? `<div class="card-desc">${escapeHtml(t.description)}</div>` : ''}
+                        <div class="task-meta">
+                            <span><i class="bi bi-person me-1"></i>${escapeHtml(t.assigneeUsername || 'Unassigned')}</span>
+                            ${t.dueDate ? `<span class="${overdue ? 'overdue' : ''}"><i class="bi bi-calendar-event me-1"></i>${t.dueDate}</span>` : ''}
+                            <span><i class="bi bi-chat-left-text me-1"></i>${t.commentCount || 0}</span>
+                        </div>
+                        <div class="card-footer">
+                            <span class="priority-badge ${prioColor}"><i class="bi ${prioIcon} me-1"></i>${t.priority}</span>
+                            <div>
+                                <button class="delete-btn" onclick="event.stopPropagation();deleteTask(${t.id})" title="Delete"><i class="bi bi-trash3"></i></button>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            col.querySelectorAll('.task-card').forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+                card.addEventListener('click', () => openEditCard(card));
+            });
+        });
+    }
+
+    function handleDragStart(e) {
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+            id: e.target.dataset.id,
+            status: e.target.dataset.status
+        }));
+    }
+
+    function handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+        document.querySelectorAll('.column-body').forEach(col => {
+            col.classList.remove('drag-over');
+        });
+    }
+
+    document.querySelectorAll('.column-body').forEach(col => {
+        col.addEventListener('dragover', e => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            col.classList.add('drag-over');
+        });
+        col.addEventListener('dragleave', () => {
+            col.classList.remove('drag-over');
+        });
+        col.addEventListener('drop', async e => {
+            e.preventDefault();
+            col.classList.remove('drag-over');
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            const newStatus = col.closest('.board-column').dataset.status;
+            if (data.status === newStatus) return;
+
+            try {
+                const res = await fetch(`/api/tasks/${data.id}/status`, {
+                    method: 'PATCH',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (res.ok) {
+                    showToast(`Moved to ${newStatus === 'TODO' ? 'To Do' : newStatus === 'IN_PROGRESS' ? 'In Progress' : 'Done'}`);
+                    loadTasks();
+                } else {
+                    showToast('Failed to update status', 'danger');
+                }
+            } catch {
+                showToast('Error updating task', 'danger');
+            }
+        });
+    });
+
+    function openEditCard(card) {
+        const id = card.dataset.id;
+        fetch(`/api/tasks/${id}`, {
+            headers: authHeaders()
+        }).then(r => r.json()).then(t => {
+            selectedTaskId = t.id;
+            document.getElementById('editId').value = t.id;
+            document.getElementById('editTitle').value = t.title;
+            document.getElementById('editDescription').value = t.description || '';
+            document.getElementById('editPriority').value = t.priority;
+            document.getElementById('editStatus').value = t.status;
+            document.getElementById('editAssigneeId').value = t.assigneeId || '';
+            document.getElementById('editDueDate').value = t.dueDate || '';
+            loadComments(t.id);
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        });
+    }
+
+    async function deleteTask(id) {
+        if (!confirm('Delete this task?')) return;
+        await fetch(`/api/tasks/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
+        showToast('Task deleted', 'danger');
+        loadTasks();
+    }
+
+    async function loadComments(taskId) {
+        const list = document.getElementById('commentsList');
+        list.innerHTML = '<div class="text-muted small">Loading comments...</div>';
+        const res = await fetch(`/api/tasks/${taskId}/comments`, {
+            headers: authHeaders()
+        });
+        if (!res.ok) {
+            list.innerHTML = '<div class="text-danger small">Failed to load comments.</div>';
+            return;
+        }
+
+        const comments = await res.json();
+        document.getElementById('commentsCount').textContent = `${comments.length} comment${comments.length === 1 ? '' : 's'}`;
+        if (!comments.length) {
+            list.innerHTML = '<div class="text-muted small">No comments yet.</div>';
+            return;
+        }
+
+        list.innerHTML = comments.map(comment => `
+            <div class="comment-row">
+                <div class="comment-meta">${escapeHtml(comment.authorUsername)} · ${new Date(comment.createdAt).toLocaleString()}</div>
+                <div class="comment-content">${escapeHtml(comment.content)}</div>
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const error = document.getElementById('error');
+        error.classList.add('d-none');
+        error.textContent = '';
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Creating...';
+        try {
+            const res = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({
+                    title: document.getElementById('title').value,
+                    description: document.getElementById('description').value,
+                    priority: document.getElementById('priority').value,
+                    assigneeId: document.getElementById('assigneeId').value ? parseInt(document.getElementById('assigneeId').value) : null,
+                    dueDate: document.getElementById('dueDate').value || null,
+                    projectId: parseInt(projectId)
+                })
+            });
+            if (res.ok) {
+                const task = await res.json();
+                if (createStatus !== 'TODO') {
+                    const statusRes = await fetch(`/api/tasks/${task.id}/status`, {
+                        method: 'PATCH',
+                        headers: authHeaders({ 'Content-Type': 'application/json' }),
+                        body: JSON.stringify({ status: createStatus })
+                    });
+                    if (!statusRes.ok) {
+                        error.textContent = await getErrorMessage(statusRes);
+                        error.classList.remove('d-none');
+                        return;
+                    }
+                }
+                document.getElementById('createForm').reset();
+                bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                showToast('Task created!');
+                loadTasks();
+            } else {
+                error.textContent = await getErrorMessage(res);
+                error.classList.remove('d-none');
+            }
+        } catch {
+            error.textContent = 'Network error while creating task';
+            error.classList.remove('d-none');
+        } finally {
+            resetButton(btn, 'Create Task');
+        }
+    });
+
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const btn = e.target.querySelector('button[type="submit"]');
+        const error = document.getElementById('editError');
+        error.classList.add('d-none');
+        error.textContent = '';
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+        try {
+            const res = await fetch(`/api/tasks/${id}`, {
+                method: 'PUT',
+                headers: authHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({
+                    title: document.getElementById('editTitle').value,
+                    description: document.getElementById('editDescription').value,
+                    priority: document.getElementById('editPriority').value,
+                    assigneeId: document.getElementById('editAssigneeId').value ? parseInt(document.getElementById('editAssigneeId').value) : null,
+                    dueDate: document.getElementById('editDueDate').value || null,
+                    projectId: parseInt(projectId)
+                })
+            });
+            if (res.ok) {
+                const statusRes = await fetch(`/api/tasks/${id}/status`, {
+                    method: 'PATCH',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ status: document.getElementById('editStatus').value })
+                });
+                if (statusRes.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    showToast('Task updated!');
+                    loadTasks();
+                    return;
+                }
+                error.textContent = await getErrorMessage(statusRes);
+                error.classList.remove('d-none');
+            } else {
+                error.textContent = await getErrorMessage(res);
+                error.classList.remove('d-none');
+            }
+        } catch {
+            error.textContent = 'Network error while saving task';
+            error.classList.remove('d-none');
+        } finally {
+            resetButton(btn, 'Save');
+        }
+    });
+
+    document.getElementById('memberForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const error = document.getElementById('memberError');
+        error.classList.add('d-none');
+        error.textContent = '';
+        const res = await fetch(`/api/projects/${projectId}/members`, {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ username: document.getElementById('memberUsername').value })
+        });
+        if (res.ok) {
+            projectMembers = await res.json();
+            document.getElementById('memberUsername').value = '';
+            renderMembers();
+            renderMemberOptions();
+            showToast('Member added!');
+        } else {
+            error.textContent = await getErrorMessage(res);
+            error.classList.remove('d-none');
+        }
+    });
+
+    async function removeMember(memberId) {
+        const res = await fetch(`/api/projects/${projectId}/members/${memberId}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
+        if (res.ok) {
+            projectMembers = await res.json();
+            renderMembers();
+            renderMemberOptions();
+            showToast('Member removed', 'info');
+            loadTasks();
+        } else {
+            showToast(await getErrorMessage(res), 'danger');
+        }
+    }
+
+    document.getElementById('commentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!selectedTaskId) return;
+        const input = document.getElementById('commentContent');
+        const res = await fetch(`/api/tasks/${selectedTaskId}/comments`, {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ content: input.value })
+        });
+        if (res.ok) {
+            input.value = '';
+            await loadComments(selectedTaskId);
+            loadTasks();
+        } else {
+            showToast(await getErrorMessage(res), 'danger');
+        }
+    });
+
+    document.querySelectorAll('[data-bs-target="#createModal"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            createStatus = btn.dataset.status || 'TODO';
+            document.getElementById('error').classList.add('d-none');
+        });
+    });
+
+    loadProject().then(loadTasks);
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+    });
+</script>
+</body>
+</html>

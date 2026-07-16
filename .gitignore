@@ -1,0 +1,20 @@
+# Build output
+target/
+backend/target/
+
+# Local runtime files
+.env
+*.log
+
+# IDE/editor files
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local screenshots pasted during development
+/260714_*.png
+/pasted file.png

@@ -11,8 +11,16 @@
             --primary: #667eea;
             --secondary: #764ba2;
             --bg-light: #f0f2f5;
+            --ink: #1a1a2e;
+            --muted: #6c757d;
+            --surface: #ffffff;
         }
-        body { background: var(--bg-light); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body {
+            background: linear-gradient(180deg, #f7f8fb 0%, var(--bg-light) 100%);
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+        }
         .navbar {
             background: #1a1a2e !important;
             box-shadow: 0 1px 4px rgba(0,0,0,0.15);
@@ -22,31 +30,101 @@
         .nav-link { font-weight: 500; padding: 0.4rem 0.9rem !important; border-radius: 8px; transition: all 0.15s; font-size: 0.9rem; }
         .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.1); }
 
-        .welcome-section { padding: 1.5rem 0 0.5rem; }
-        .welcome-section h1 { font-weight: 700; font-size: 1.4rem; color: #1a1a2e; }
-        .welcome-section p { color: #6c757d; font-size: 0.9rem; }
+        .dashboard-shell { padding-bottom: 2rem; }
+        .welcome-section {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1.6rem 0 0.75rem;
+        }
+        .welcome-section h1 { font-weight: 800; font-size: 1.55rem; color: var(--ink); margin: 0; }
+        .welcome-section p { color: var(--muted); font-size: 0.92rem; margin: 0.45rem 0 0; }
 
         .stat-card {
             border: none;
-            border-radius: 12px;
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            transition: transform 0.15s, box-shadow 0.15s;
+            border-radius: 14px;
+            background: var(--surface);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 14px 28px -24px rgba(26,26,46,0.45);
+            color: inherit;
+            cursor: pointer;
+            display: block;
+            min-height: 160px;
+            overflow: hidden;
+            position: relative;
+            text-decoration: none;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
         }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-        .stat-card .card-body { padding: 1.25rem; }
-        .stat-card .stat-num { font-size: 1.8rem; font-weight: 700; margin: 0; line-height: 1.2; }
-        .stat-card .stat-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.3px; color: #6c757d; margin: 0; }
+        .stat-card::before {
+            content: "";
+            height: 4px;
+            inset: 0 0 auto;
+            position: absolute;
+        }
+        .stat-card.projects::before { background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+        .stat-card.tasks::before { background: #2196f3; }
+        .stat-card.done::before { background: #28a745; }
+        .stat-card.progressing::before { background: #ff9800; }
+        .stat-card:hover {
+            color: inherit;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 26px rgba(0,0,0,0.12), 0 18px 36px -24px rgba(26,26,46,0.55);
+        }
+        .stat-card:focus-visible {
+            outline: 3px solid rgba(102, 126, 234, 0.3);
+            outline-offset: 3px;
+        }
+        .stat-card .card-body {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: inherit;
+            padding: 1.35rem;
+        }
+        .stat-top {
+            align-items: flex-start;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.9rem;
+        }
+        .stat-card .stat-num { font-size: 2rem; font-weight: 800; margin: 0; line-height: 1.05; }
+        .stat-card .stat-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.35px; color: var(--muted); margin: 0.25rem 0 0; }
+        .stat-action {
+            align-items: center;
+            color: var(--muted);
+            display: flex;
+            font-size: 0.78rem;
+            font-weight: 600;
+            gap: 0.25rem;
+            margin-top: auto;
+        }
+        .stat-card:hover .stat-action { color: var(--primary); }
         .stat-icon {
-            width: 42px; height: 42px;
+            width: 46px; height: 46px;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
         }
+        .stat-chevron {
+            align-items: center;
+            background: #f5f6fb;
+            border-radius: 999px;
+            color: var(--muted);
+            display: flex;
+            height: 30px;
+            justify-content: center;
+            transition: background 0.15s, color 0.15s, transform 0.15s;
+            width: 30px;
+        }
+        .stat-card:hover .stat-chevron {
+            background: rgba(102, 126, 234, 0.12);
+            color: var(--primary);
+            transform: translateX(2px);
+        }
 
-        .card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card { border: none; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .card-body { padding: 1.5rem; }
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -61,13 +139,26 @@
             transform: translateY(-1px);
             box-shadow: 0 6px 16px -4px rgba(102, 126, 234, 0.4);
         }
+        .quick-panel {
+            background:
+                linear-gradient(135deg, rgba(102,126,234,0.08), rgba(118,75,162,0.05)),
+                var(--surface);
+            border: 1px solid rgba(102,126,234,0.12);
+        }
+        .quick-panel .card-body { gap: 1rem; }
         .footer-bar {
-            background: white;
+            background: rgba(255,255,255,0.75);
             border-top: 1px solid #eef0f5;
             padding: 0.75rem 0;
             margin-top: 2rem;
-            color: #6c757d;
+            color: var(--muted);
             font-size: 0.85rem;
+        }
+        @media (max-width: 767.98px) {
+            .welcome-section { align-items: flex-start; flex-direction: column; }
+            .stat-card { min-height: 150px; }
+            .quick-panel .card-body { align-items: flex-start !important; flex-direction: column; }
+            .quick-panel .btn { width: 100%; }
         }
     </style>
 </head>
@@ -78,79 +169,93 @@
             <div class="navbar-nav ms-auto">
                 <a class="nav-link active" href="/dashboard"><i class="bi bi-grid-1x2 me-1"></i>Dashboard</a>
                 <a class="nav-link" href="/projects"><i class="bi bi-folder me-1"></i>Projects</a>
+                <a class="nav-link" href="/tasks"><i class="bi bi-list-task me-1"></i>Tasks</a>
                 <a class="nav-link" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
             </div>
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container dashboard-shell">
         <div class="welcome-section">
-            <h1><i class="bi bi-grid-1x2 me-2 text-primary"></i>Dashboard</h1>
-            <p>Here's your project overview.</p>
+            <div>
+                <h1><i class="bi bi-grid-1x2 me-2 text-primary"></i>Dashboard</h1>
+                <p>Track your projects, task load, and progress from one place.</p>
+            </div>
+            <a href="/projects" class="btn btn-primary">
+                <i class="bi bi-folder2-open me-1"></i>Open Projects
+            </a>
         </div>
 
         <div class="row g-3">
             <div class="col-6 col-md-3">
-                <div class="card stat-card">
+                <a href="/projects" class="card stat-card projects" aria-label="Open projects">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="stat-top">
                             <div class="stat-icon" style="background: linear-gradient(135deg, #667eea20, #764ba220); color: var(--primary);">
                                 <i class="bi bi-folder"></i>
                             </div>
+                            <span class="stat-chevron"><i class="bi bi-arrow-right-short"></i></span>
                         </div>
                         <p class="stat-num" id="totalProjects">0</p>
                         <p class="stat-label">Projects</p>
+                        <span class="stat-action">View projects <i class="bi bi-arrow-right"></i></span>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-6 col-md-3">
-                <div class="card stat-card">
+                <a href="/tasks" class="card stat-card tasks" aria-label="Open all tasks">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="stat-top">
                             <div class="stat-icon" style="background: #2196f315; color: #2196f3;">
                                 <i class="bi bi-list-task"></i>
                             </div>
+                            <span class="stat-chevron"><i class="bi bi-arrow-right-short"></i></span>
                         </div>
                         <p class="stat-num" id="totalTasks">0</p>
                         <p class="stat-label">Total Tasks</p>
+                        <span class="stat-action">View tasks <i class="bi bi-arrow-right"></i></span>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-6 col-md-3">
-                <div class="card stat-card">
+                <a href="/tasks?status=DONE" class="card stat-card done" aria-label="Open completed tasks">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="stat-top">
                             <div class="stat-icon" style="background: #4caf5015; color: #4caf50;">
                                 <i class="bi bi-check-circle"></i>
                             </div>
+                            <span class="stat-chevron"><i class="bi bi-arrow-right-short"></i></span>
                         </div>
                         <p class="stat-num" id="completedTasks">0</p>
                         <p class="stat-label">Completed</p>
+                        <span class="stat-action">Completed tasks <i class="bi bi-arrow-right"></i></span>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-6 col-md-3">
-                <div class="card stat-card">
+                <a href="/tasks?status=IN_PROGRESS" class="card stat-card progressing" aria-label="Open in-progress tasks">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="stat-top">
                             <div class="stat-icon" style="background: #ff980015; color: #ff9800;">
                                 <i class="bi bi-arrow-repeat"></i>
                             </div>
+                            <span class="stat-chevron"><i class="bi bi-arrow-right-short"></i></span>
                         </div>
                         <p class="stat-num" id="inProgressTasks">0</p>
                         <p class="stat-label">In Progress</p>
+                        <span class="stat-action">In-progress tasks <i class="bi bi-arrow-right"></i></span>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
 
-        <div class="card mt-4">
+        <div class="card quick-panel mt-4">
             <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="mb-1 fw-bold"><i class="bi bi-rocket-takeoff me-2 text-primary"></i>Ready to get things done?</h5>
-                    <p class="text-muted mb-0">Manage your projects and track tasks in one place.</p>
+                    <p class="text-muted mb-0">Open the board, assign work, update due dates, and keep your team moving.</p>
                 </div>
-                <a href="/projects" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Go to Projects</a>
+                <a href="/projects" class="btn btn-primary"><i class="bi bi-kanban me-1"></i>Go to Projects</a>
             </div>
         </div>
     </div>

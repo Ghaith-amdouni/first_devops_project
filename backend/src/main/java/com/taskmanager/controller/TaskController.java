@@ -23,7 +23,7 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping
-    public ResponseEntity<List<TaskResponse>> getTasks(@RequestParam Long projectId,
+    public ResponseEntity<List<TaskResponse>> getTasks(@RequestParam(required = false) Long projectId,
                                                        @RequestParam(required = false) String status,
                                                        @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(taskService.getTasks(projectId, status, user));

@@ -31,6 +31,11 @@ public class PageController {
         return "projects";
     }
 
+    @GetMapping("/tasks")
+    public String tasks() {
+        return "tasks";
+    }
+
     @GetMapping("/project")
     public String project() {
         return "project";

@@ -30,11 +30,19 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<TaskResponse> getTasks(Long projectId, String status, User user) {
+        Task.Status taskStatus = parseStatus(status);
+
+        if (projectId == null) {
+            List<Task> tasks = taskStatus != null
+                    ? taskRepository.findAccessibleByUserIdAndStatus(user.getId(), taskStatus)
+                    : taskRepository.findAccessibleByUserId(user.getId());
+            return tasks.stream().map(this::toResponse).toList();
+        }
+
         projectService.findProjectForUser(projectId, user);
         List<Task> tasks;
 
-        if (status != null && !status.isEmpty()) {
-            Task.Status taskStatus = Task.Status.valueOf(status.toUpperCase());
+        if (taskStatus != null) {
             tasks = taskRepository.findByProjectIdAndStatus(projectId, taskStatus);
         } else {
             tasks = taskRepository.findByProjectId(projectId);
@@ -142,6 +150,13 @@ public class TaskService {
         }
         return userRepository.findById(assigneeId)
                 .orElseThrow(() -> new RuntimeException("Assignee not found"));
+    }
+
+    private Task.Status parseStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        return Task.Status.valueOf(status.toUpperCase());
     }
 
     private TaskResponse toResponse(Task task) {

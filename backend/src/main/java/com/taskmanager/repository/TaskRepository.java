@@ -34,4 +34,24 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             """)
     long countAccessibleByUserIdAndStatus(@Param("userId") Long userId,
                                           @Param("status") Task.Status status);
+
+    @Query("""
+            select distinct t
+            from Task t
+            left join t.project.members m
+            where t.project.owner.id = :userId or m.id = :userId
+            order by t.updatedAt desc
+            """)
+    List<Task> findAccessibleByUserId(@Param("userId") Long userId);
+
+    @Query("""
+            select distinct t
+            from Task t
+            left join t.project.members m
+            where (t.project.owner.id = :userId or m.id = :userId)
+              and t.status = :status
+            order by t.updatedAt desc
+            """)
+    List<Task> findAccessibleByUserIdAndStatus(@Param("userId") Long userId,
+                                               @Param("status") Task.Status status);
 }

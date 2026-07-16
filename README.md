@@ -34,7 +34,7 @@ backend/                 Spring Boot application
 docker/                  Dockerfile and Docker Compose config
 k8s/                     Kubernetes manifests
 k8s/monitoring/          Prometheus ServiceMonitor and Grafana dashboard
-docs/                    Optional CI/CD workflow template
+.github/workflows/       GitHub Actions CI/CD workflow
 ```
 
 ## Run With Docker Compose
@@ -162,7 +162,7 @@ If port `8080` shows an old Docker container, stop it:
 docker stop taskmanager-app
 ```
 
-## CI/CD Template
+## CI/CD
 
-An example GitHub Actions workflow is available at `docs/ci-cd.yml.example`.
-To enable it, copy it to `.github/workflows/ci-cd.yml` and configure the required repository secrets.
+The GitHub Actions workflow at `.github/workflows/ci-cd.yml` builds and tests the Spring Boot app.
+On pushes to `main`, it also publishes the Docker image to GitHub Container Registry and uploads Kubernetes manifests patched with the pushed image tag.
